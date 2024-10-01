@@ -65,13 +65,15 @@ H W fx fy cx cy depth_scale depth_trunc dataset_type
 ## 8. Run gs_icp_slam.py
 ```bash
 cd /home/GS_ICP_SLAM
-python -W ignore gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
 python -W ignore gs_icp_slam.py --dataset_path /home/GS_ICP_SLAM/dataset/TUM/rgbd_dataset_freiburg1_desk --config /home/GS_ICP_SLAM/configs/TUM/rgbd_dataset_freiburg1_desk.txt --rerun_viewer
+python -W ignore gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
 ```
 
 
 ## troubleshooting
 [rerun docker issue](https://github.com/rerun-io/rerun/issues/6835)
+
+rerun reset
 
 [Nvidia Developer Forum](https://forums.developer.nvidia.com/t/new-computer-install-gpu-docker-error/266084/6)
 

@@ -13,6 +13,6 @@ docker run -d -it --gpus all --privileged --network=host --shm-size=15G \
     -e XAUTHORITY=$XAUTH \
     -v $XSOCK:$XSOCK \
     -v $XAUTH:$XAUTH \
-    -v /home/lucas/GS_ICP_SLAM:/home/GS_ICP_SLAM \
+    -v ./..:/home/GS_ICP_SLAM \
     --name gsicp_exp1 \
     gs_icp_slam_image
