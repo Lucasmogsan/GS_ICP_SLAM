@@ -12,6 +12,14 @@ docker build -t gs_icp_slam_image .
 ```
 
 ## 3. Run container
+If this is your first time you need to add your display to the docker-xauthentication file.
+```bash
+XAUTH=/tmp/.docker.xauth
+xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+chmod 777 $XAUTH
+```
+
+Start the container
 ```bash
 chmod +x run.sh
 ./run.sh
@@ -65,8 +73,11 @@ H W fx fy cx cy depth_scale depth_trunc dataset_type
 ## 8. Run gs_icp_slam.py
 ```bash
 cd /home/GS_ICP_SLAM
-python -W ignore gs_icp_slam.py --dataset_path /home/GS_ICP_SLAM/dataset/TUM/rgbd_dataset_freiburg1_desk --config /home/GS_ICP_SLAM/configs/TUM/rgbd_dataset_freiburg1_desk.txt --rerun_viewer
 python -W ignore gs_icp_slam.py --dataset_path /path/to/your/dataset --config /path/to/your/config/caminfo.txt --rerun_viewer
+```
+
+```bash
+python -W ignore gs_icp_slam.py --dataset_path /home/GS_ICP_SLAM/dataset/TUM/rgbd_dataset_freiburg1_desk --config /home/GS_ICP_SLAM/configs/TUM/rgbd_dataset_freiburg1_desk.txt --rerun_viewer
 ```
 
 

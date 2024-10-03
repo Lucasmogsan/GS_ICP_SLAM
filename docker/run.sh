@@ -1,10 +1,6 @@
 XSOCK=/tmp/.X11-unix
 XAUTH=/tmp/.docker.xauth
 
-# Generate xauth file for Docker to access X11
-xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
-chmod 777 $XAUTH
-
 # Run Docker container
 docker run -d -it --gpus all --privileged --network=host --shm-size=15G \
     --device=/dev \
