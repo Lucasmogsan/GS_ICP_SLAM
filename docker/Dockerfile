@@ -76,4 +76,6 @@ RUN pip install rerun-sdk
 #### pyrealsense2
 RUN pip install pyrealsense2
 
+## ADD GIT SUBMODULES? JUST RUN THE SCRIPT?
+
 WORKDIR /home/GS_ICP_SLAM

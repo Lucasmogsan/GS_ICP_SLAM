@@ -2,8 +2,13 @@ XSOCK=/tmp/.X11-unix
 XAUTH=/tmp/.docker.xauth
 
 # Run Docker container
-docker run -d -it --gpus all --privileged --network=host --shm-size=15G \
+docker run -d -it \
+    --gpus all \
+    --privileged \
+    --network=host \
+    --shm-size=15G \
     --device=/dev \
+    --runtime=nvidia \
     -e NVIDIA_DRIVER_CAPABILITIES=all \
     -e DISPLAY=$DISPLAY \
     -e XAUTHORITY=$XAUTH \
