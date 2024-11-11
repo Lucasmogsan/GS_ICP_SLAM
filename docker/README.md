@@ -1,5 +1,8 @@
 # Running GS_ICP_SLAM with docker and custom dataset
 
+## Step 0.
+Make sure you've installed docker, updated your nvidia driver, installed nvidia-container-toolkit
+
 ## 1. Clone forked repository
 ```bash
 git clone git@github.com:Lucasmogsan/GS_ICP_SLAM.git
@@ -12,11 +15,12 @@ docker build -t gs_icp_slam_image .
 ```
 
 ## 3. Run container
-If this is your first time you need to add your display to the docker-xauthentication file.
+If this is your first time you need to add your display to the docker-xauthentication file (https://github.com/rerun-io/rerun/issues/6835).
 ```bash
 XAUTH=/tmp/.docker.xauth
 xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 chmod 777 $XAUTH
+cat $XAUTH
 ```
 
 Start the container

@@ -20,6 +20,8 @@ from torchmetrics.image.lpip import LearnedPerceptualImagePatchSimilarity
 import open3d as o3d
 import matplotlib.pyplot as plt
 
+import wandb
+
 class Pipe():
     def __init__(self, convert_SHs_python, compute_cov3D_python, debug):
         self.convert_SHs_python = convert_SHs_python
@@ -38,6 +40,9 @@ class Mapper(SLAMParameters):
         self.save_results = slam.save_results
         self.rerun_viewer = slam.rerun_viewer
         self.iter_shared = slam.iter_shared
+        
+        self.wandb = slam.wandb
+        self.project_name = slam.project_name
 
         self.camera_parameters = slam.camera_parameters
         self.W = slam.W
@@ -116,8 +121,20 @@ class Mapper(SLAMParameters):
             network_gui.init("127.0.0.1", 6009)
         
         if self.rerun_viewer:
+            print("MAP HERE!")
             rr.init("3dgsviewer")
-            rr.connect()
+            # Connect to the Rerun WebSocket server
+            rr.connect()#addr='127.0.0.1:4321')  # Ensure the server is actually running on this address
+
+            # If the default server address is 127.0.0.1:9876, you can specify this explicitly if needed:
+            # rr.connect(addr='ws://127.0.0.1:9876')  # Check if this is the correct port
+        
+        if self.wandb:
+            time_string = time.strftime("%Y%m%d-%H%M%S")
+            scene_name = self.output_path.split("/")[-3]
+            wandb.init(project=self.project_name, group=f'slam_{self.trajmanager.which_dataset}',
+                       name='mapper_'+time_string,
+                       settings=wandb.Settings(code_dir="."), tags=[scene_name])
         
         # Mapping Process is ready to receive first frame
         self.is_mapping_process_started[0] = 1
@@ -150,6 +167,7 @@ class Mapper(SLAMParameters):
         self.keyframe_idxs.append(newcam.cam_idx[0])
         self.new_keyframes.append(len(self.mapping_cams)-1)
 
+        print("Mapping start...")
         new_keyframe = False
         while True:
             if self.end_of_dataset[0]:
@@ -238,6 +256,9 @@ class Mapper(SLAMParameters):
                 loss_d = Ll1_d
                 
                 loss = loss_rgb + 0.1*loss_d
+                
+                if self.wandb:
+                    wandb.log({"loss_rgb": loss_rgb, "loss_d": loss_d, "loss": loss})
                 
                 loss.backward()
                 with torch.no_grad():
@@ -333,6 +354,8 @@ class Mapper(SLAMParameters):
 
     
     def calc_2d_metric(self):
+        print("Calculating 2D metrics and generating views...")
+        
         psnrs = []
         ssims = []
         lpips = []
@@ -398,26 +421,43 @@ class Mapper(SLAMParameters):
                 lpips += [lpips_value.detach().cpu()]
                 
                 if self.save_results and ((i+1)%100==0 or i==len(image_names)-1):
-                    ours_rgb = np.asarray(ours_rgb_.detach().cpu()).squeeze().transpose((1,2,0))
+                    ours_rgb_output = np.asarray(ours_rgb_.detach().cpu()).squeeze().transpose((1,2,0)) # edited from ours_rgb
+                    gt_rgb_output = gt_rgb # np.asarray(gt_rgb_.detach().cpu()).squeeze().transpose((1,2,0))
                     
-                    axs[0].set_title("gt rgb")
-                    axs[0].imshow(gt_rgb)
-                    axs[0].axis("off")
-                    axs[1].set_title("rendered rgb")
-                    axs[1].imshow(ours_rgb)
-                    axs[1].axis("off")
-                    plt.suptitle(f'{i+1} frame')
-                    plt.pause(1e-15)
-                    plt.savefig(f"{self.output_path}/result_{i}.png")
-                    plt.cla()
+                    # Save the predicted output image
+                    ours_rgb_output = np.clip(ours_rgb_output, 0., 1.0)
+                    ours_rgb_output = (ours_rgb_output*255).astype(np.uint8)
+                    cv2.imwrite(f"{self.output_path}/pred_rgb_{i}.png", cv2.cvtColor(ours_rgb_output, cv2.COLOR_RGB2BGR))
+                    
+                    if self.wandb:
+                        wandb.log({"pred_rgb": wandb.Image(ours_rgb_output)})
+                    
+                    # Save the comparison:
+                    # axs[0].set_title("gt rgb")
+                    # axs[0].imshow(gt_rgb_output)
+                    # axs[0].axis("off")
+                    # axs[1].set_title("rendered rgb")
+                    # axs[1].imshow(ours_rgb_output)
+                    # axs[1].axis("off")
+                    # plt.suptitle(f'{i+1} frame')
+                    # plt.pause(1e-15)
+                    # plt.savefig(f"{self.output_path}/result_{i}.png")
+                    # plt.cla()
+                    
+                    
                 
                 torch.cuda.empty_cache()
             
             psnrs = np.array(psnrs)
             ssims = np.array(ssims)
             lpips = np.array(lpips)
-            
+            print(len(psnrs))
             print(f"PSNR: {psnrs.mean():.2f}\nSSIM: {ssims.mean():.3f}\nLPIPS: {lpips.mean():.3f}")
+            
+            # Save the metrics to wandb
+            if self.wandb:
+                wandb.log({"PSNR": psnrs.mean(), "SSIM": ssims.mean(), "LPIPS": lpips.mean()})
+                wandb.finish()
 
 def mse2psnr(x):
     return -10.*torch.log(x)/torch.log(torch.tensor(10.))

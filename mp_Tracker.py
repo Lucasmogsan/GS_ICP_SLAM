@@ -16,7 +16,7 @@ from arguments import SLAMParameters
 from utils.traj_utils import TrajManager
 from gaussian_renderer import render, render_2, network_gui
 from tqdm import tqdm
-
+import wandb
 
 class Tracker(SLAMParameters):
     def __init__(self, slam):
@@ -33,6 +33,9 @@ class Tracker(SLAMParameters):
         self.test = slam.test
         self.rerun_viewer = slam.rerun_viewer
         self.iter_shared = slam.iter_shared
+        
+        self.wandb = slam.wandb
+        self.project_name = slam.project_name
         
         self.camera_parameters = slam.camera_parameters
         self.W = slam.W
@@ -102,7 +105,16 @@ class Tracker(SLAMParameters):
         
         if self.rerun_viewer:
             rr.init("3dgsviewer")
-            rr.connect()
+            print("TRACK HERE!")
+            rr.connect()#addr='127.0.0.1:4321')
+        
+
+        if self.wandb:
+            time_string = time.strftime("%Y%m%d-%H%M%S")
+            scene_name = self.output_path.split("/")[-3]
+            wandb.init(project=self.project_name, group=f'slam_{self.trajmanager.which_dataset}',
+                       name='tracker_'+time_string,
+                       settings=wandb.Settings(code_dir="."), tags=[scene_name])
         
         self.rgb_images, self.depth_images = self.get_images(f"{self.dataset_path}/images")
         self.num_images = len(self.rgb_images)
@@ -113,12 +125,13 @@ class Tracker(SLAMParameters):
         self.total_start_time = time.time()
         pbar = tqdm(total=self.num_images)
 
+        print("Tracking start...")
         for ii in range(self.num_images):
             self.iter_shared[0] = ii
             current_image = self.rgb_images.pop(0)
             depth_image = self.depth_images.pop(0)
             current_image = cv2.cvtColor(current_image, cv2.COLOR_RGB2BGR)
-                
+
             # Make pointcloud
             points, colors, z_values, trackable_filter = self.downsample_and_make_pointcloud2(depth_image, current_image)
             # GICP
@@ -249,7 +262,6 @@ class Tracker(SLAMParameters):
                     if_mapping_keyframe = False
                 
                 if if_tracking_keyframe:
-                    
                     while self.is_tracking_keyframe_shared[0] or self.is_mapping_keyframe_shared[0]:
                         time.sleep(1e-15)
                     
@@ -294,7 +306,6 @@ class Tracker(SLAMParameters):
                         rr.log(f"pt/trackable/{self.iteration_images}", rr.Points3D(points, colors=colors, radii=0.01))
 
                 elif if_mapping_keyframe:
-                    
                     while self.is_tracking_keyframe_shared[0] or self.is_mapping_keyframe_shared[0]:
                         time.sleep(1e-15)
                     
@@ -329,12 +340,40 @@ class Tracker(SLAMParameters):
         pbar.close()
         self.final_pose[:,:,:] = torch.tensor(self.poses).float()
         self.end_of_dataset[0] = 1
+        system_fps = 1/((time.time()-self.total_start_time)/self.num_images)
+        ate_rmse = self.evaluate_ate(self.trajmanager.gt_poses, self.poses)*100.
+        print(f"System FPS: {system_fps:.2f}")
+        print(f"ATE RMSE: {ate_rmse:.2f}")
         
-        print(f"System FPS: {1/((time.time()-self.total_start_time)/self.num_images):.2f}")
-        print(f"ATE RMSE: {self.evaluate_ate(self.trajmanager.gt_poses, self.poses)*100.:.2f}")
+        if self.wandb:
+            wandb.log({"System FPS": system_fps, "ATE RMSE": ate_rmse})
+            wandb.finish()
+        
+        # Save poses as .txt
+        with open(f"{self.output_path}/poses.txt", "w") as f:
+            for frameID, pose in enumerate(self.poses):
+                # Extract translation (tx, ty, tz)
+                tx, ty, tz = pose[0, 3], pose[1, 3], pose[2, 3]
+                # Extract rotation matrix and convert to quaternion (qx, qy, qz, qw)
+                rotation_matrix = pose[:3, :3]
+                quaternion = Rotation.from_matrix(rotation_matrix).as_quat()  # [qx, qy, qz, qw]
+                # Write to file in desired format
+                f.write(f"{frameID} {tx} {ty} {tz} {quaternion[0]} {quaternion[1]} {quaternion[2]} {quaternion[3]}\n")
+        
+        # Save gt poses as .txt
+        with open(f"{self.output_path}/gt_poses.txt", "w") as f:
+            for pose in self.trajmanager.gt_poses:
+                # Extract translation (tx, ty, tz)
+                tx, ty, tz = pose[0, 3], pose[1, 3], pose[2, 3]
+                # Extract rotation matrix and convert to quaternion (qx, qy, qz, qw)
+                rotation_matrix = pose[:3, :3]
+                quaternion = Rotation.from_matrix(rotation_matrix).as_quat()  # [qx, qy, qz, qw]
+                # Write to file in desired format
+                f.write(f"{tx} {ty} {tz} {quaternion[0]} {quaternion[1]} {quaternion[2]} {quaternion[3]}\n")
 
     
     def get_images(self, images_folder):
+        print("Loading images...")
         rgb_images = []
         depth_images = []
         if self.trajmanager.which_dataset == "replica":
@@ -463,6 +502,7 @@ class Tracker(SLAMParameters):
         return rot, trans, trans_error
 
     def evaluate_ate(self, gt_traj, est_traj):
+        print("Evaluating ATE...")
 
         gt_traj_pts = [gt_traj[idx][:3,3] for idx in range(len(gt_traj))]
         gt_traj_pts_arr = np.array(gt_traj_pts)

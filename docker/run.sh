@@ -15,5 +15,7 @@ docker run -d -it \
     -v $XSOCK:$XSOCK \
     -v $XAUTH:$XAUTH \
     -v ./..:/home/GS_ICP_SLAM \
+    -v ./../../thesis_utils/download_benchmark_data/dataset:/home/dataset \
+    -v ./../../thesis_utils/output_analysis/runs:/home/output \
     --name gsicp_exp1 \
     gs_icp_slam_image

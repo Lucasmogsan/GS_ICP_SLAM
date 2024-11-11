@@ -1,5 +1,5 @@
-OUTPUT_PATH="experiments/results"
-DATASET_PATH="dataset/Replica"
+OUTPUT_PATH="/home/output/Replica"
+DATASET_PATH="/home/dataset/Replica"
 
 str_pad() {
 
@@ -51,11 +51,14 @@ run_()
     local trackable_opacity_th=$8
     local overlapped_th2=$9
     local downsample_rate=${10}
+
+    # Generate a timestamp
+    local timestamp=$(date +"%Y%m%d_%H%M%S")
     
     echo "run $dataset"
     python -W ignore gs_icp_slam.py --dataset_path $DATASET_PATH/$dataset\
                                     --config $config\
-                                    --output_path $OUTPUT_PATH/$dataset/results\
+                                    --output_path $OUTPUT_PATH/$dataset/GS_ICP_SLAM/$timestamp\
                                     --keyframe_th $keyframe_th\
                                     --knn_maxd $knn_maxd\
                                     --overlapped_th $overlapped_th\
@@ -63,7 +66,8 @@ run_()
                                     --trackable_opacity_th $trackable_opacity_th\
                                     --overlapped_th2 $overlapped_th2\
                                     --downsample_rate $downsample_rate\
-                                    --save_results
+                                    --save_results\
+                                    --wandb
     wait
 }
 

@@ -75,6 +75,12 @@ RUN sudo make install
 RUN pip install rerun-sdk
 #### pyrealsense2
 RUN pip install pyrealsense2
+#### wandb
+RUN sudo apt-get update
+RUN sudo apt-get remove -y python3-psutil
+RUN pip install psutil wandb
+ENV WANDB_API_KEY=06fc375ce8e4c6e6a3ced49a30108bc17d4f8099
+RUN wandb login
 
 ## ADD GIT SUBMODULES? JUST RUN THE SCRIPT?
 

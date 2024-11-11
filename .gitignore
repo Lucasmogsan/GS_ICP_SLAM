@@ -60,4 +60,7 @@ CATKIN_IGNORE
 
 ### DATA ###
 *.bag
-/dataset/TUM/*
+/dataset/*
+/wandb/*
+
+/experiments/*

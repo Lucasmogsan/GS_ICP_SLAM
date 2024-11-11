@@ -17,6 +17,7 @@ from scene.shared_objs import SharedCam, SharedGaussians, SharedPoints, SharedTa
 from gaussian_renderer import render, network_gui
 from mp_Tracker import Tracker
 from mp_Mapper import Mapper
+import wandb
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -47,7 +48,11 @@ class GS_ICP_SLAM(SLAMParameters):
         
         if self.rerun_viewer:
             rr.init("3dgsviewer")
+            print("GS_ICP HERE!")
+            #rr.serve(open_browser=False, web_port=9090, ws_port=4321)
             rr.spawn(connect=False)
+        
+        self.wandb = args.wandb
         
         camera_parameters_file = open(self.config)
         camera_parameters_ = camera_parameters_file.readlines()
@@ -68,6 +73,8 @@ class GS_ICP_SLAM(SLAMParameters):
             pass
         
         self.trajmanager = TrajManager(self.camera_parameters[8], self.dataset_path)
+        
+        self.project_name = f"GS-ICP-SLAM_{self.trajmanager.which_dataset}"
         
         # Make test cam
         # To get memory sizes of shared_cam
@@ -158,7 +165,7 @@ class GS_ICP_SLAM(SLAMParameters):
             depth_file = os.listdir(depth_folder)[0]
             rgb_image = cv2.imread(os.path.join(rgb_folder, rgb_file))
             depth_image = np.array(o3d.io.read_image(os.path.join(depth_folder, depth_file))).astype(np.float32)
-            
+
         return rgb_image, depth_image
 
     def run_viewer(self, lower_speed=True):
@@ -259,6 +266,7 @@ if __name__ == "__main__":
     parser.add_argument("--test", default=None)
     parser.add_argument("--save_results", action='store_true', default=None)
     parser.add_argument("--rerun_viewer", action="store_true", default=False)
+    parser.add_argument("--wandb", action="store_true", default=False)
     args = parser.parse_args()
 
     gs_icp_slam = GS_ICP_SLAM(args)
