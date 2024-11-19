@@ -83,6 +83,26 @@ python setup.py install --user
         bash download_tum.sh
     ```
 
+- Custom Data
+  - Your custom dataset should have the following structure:
+    ```bash
+    custom_dataset/
+    ├── rgb/
+    │   ├── frame000000.jpg
+    │   ├── frame000001.jpg
+    │   └── ...
+    ├── depth/
+    │   ├── depth000000.png
+    │   ├── depth000001.png
+    │   └── ...
+    ```
+  - Don't forget to add your config inside `GS_ICP_SLAM/configs/custom/your_config.txt`, which should look similar to this:
+    ``` bash
+    ## camera parameters
+    H W fx fy cx cy depth_scale depth_trunc dataset_type
+    0000 0000 0000 0000 0000 0000 0000 0000 custom
+    ```
+
 ## Run
 - Limited to 30 FPS
     ```bash
