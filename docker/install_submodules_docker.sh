@@ -15,7 +15,7 @@ echo "Copying submodules directory from the cloned repository to the mounted GS_
 cp -r "$CLONED_DIR/submodules" "$MOUNTED_DIR/"
 
 echo "Navigating to fast_gicp directory in the mounted GS_ICP_SLAM..."
-cd "$MOUNTED_DIR/submodules/fast_gicp"
+cd "$MOUNTED_DIR/fast_gicp"
 
 echo "Creating build directory..."
 mkdir build

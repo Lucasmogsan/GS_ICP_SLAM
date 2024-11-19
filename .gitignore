@@ -57,6 +57,7 @@ CATKIN_IGNORE
 ### PYTHON STUFF ###
 .vscode/
 **/__pycache__/
+**/*.pyc
 
 ### DATA ###
 *.bag

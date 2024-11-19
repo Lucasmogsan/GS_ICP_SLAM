@@ -23,23 +23,24 @@ chmod 777 $XAUTH
 cat $XAUTH
 ```
 
-Start the container
+Start the container using the shelle script or docker compose file:
 ```bash
 chmod +x run.sh
 ./run.sh
+docker compose up dev
 ```
 
 ## 4. Access container
 ```bash
 docker exec -it gsicp_exp1 bash
 ```
-- name of container is set in `run.sh`
+- name of container is set in `run.sh` or compose file
 
 ## 5. Install submodules (fast_gicp, diff-gaussian-rasterization, simple-knn)
 ```bash
 cd /home/GS_ICP_SLAM/docker
-chmod +x install_submodules.sh
-./install_submodules.sh    
+chmod +x install_submodules_docker.sh
+./install_submodules_docker.sh    
 ```
 
 ## 6. Run the algorithm with live stream data from a realsense depth camera or jump to 7.

@@ -58,7 +58,7 @@ run_()
     echo "run $dataset"
     python -W ignore gs_icp_slam_unlimit.py --dataset_path $DATASET_PATH/$dataset\
                                     --config $config\
-                                    --output_path $OUTPUT_PATH/$dataset/GS_ICP_SLAM/$timestamp\
+                                    --output_path $OUTPUT_PATH/$dataset/GS_ICP_SLAM_UNLIMIT/$timestamp\
                                     --keyframe_th $keyframe_th\
                                     --knn_maxd $knn_maxd\
                                     --overlapped_th $overlapped_th\
