@@ -2,7 +2,7 @@
 
 set -e
 
-MOUNTED_DIR="/home/GS_ICP_SLAM"
+MOUNTED_DIR="/home/test_submodules"
 CLONED_DIR="/home/cloned_GS_ICP_SLAM"
 
 echo "Cloning GS-ICP_SLAM repository..."

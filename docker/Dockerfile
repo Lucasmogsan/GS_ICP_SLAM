@@ -82,6 +82,4 @@ RUN pip install psutil wandb
 ENV WANDB_API_KEY=06fc375ce8e4c6e6a3ced49a30108bc17d4f8099
 RUN wandb login
 
-## ADD GIT SUBMODULES? JUST RUN THE SCRIPT?
-
 WORKDIR /home/GS_ICP_SLAM

@@ -1,7 +1,7 @@
 XSOCK=/tmp/.X11-unix
 XAUTH=/tmp/.docker.xauth
 
-# Run Docker container
+# Run the container
 docker run -d -it \
     --gpus all \
     --privileged \
