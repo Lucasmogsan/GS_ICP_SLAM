@@ -23,7 +23,8 @@ class TrajManager:
             self.gt_poses = self.replica_load_poses(self.dataset_path + '/traj.txt')
             self.gt_poses_vis = np.array([x[:3, 3] for x in self.gt_poses])
         elif self.which_dataset == "custom":
-            self.poses = self.load_default_pose()
+            n_images = len(os.listdir(self.dataset_path + '/depth'))
+            self.poses = self.load_default_pose(n_images)
         else:
             print("Unknown dataset!")
             sys.exit()
@@ -62,12 +63,13 @@ class TrajManager:
         pose[:3, 3] = pvec[:3]
         return pose
 
-    def load_default_pose(self):
+    def load_default_pose(self, n_images):
         poses = []
         # hardcoded default position
         pvec = [1, 1, 1, 1, 1, 1, 1]
         c2w = self.pose_matrix_from_quaternion(pvec=pvec)
-        poses += [c2w]
+        for i in range(n_images):
+            poses.append(c2w)
         return np.array(poses)
 
     def tum_load_poses(self, path):

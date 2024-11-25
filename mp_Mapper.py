@@ -291,8 +291,8 @@ class Mapper(SLAMParameters):
         if self.save_results and not self.rerun_viewer:
             self.gaussians.save_ply(os.path.join(self.output_path, "scene.ply"))
         
-        if self.trajmanager.which_dataset != "custom":
-            self.calc_2d_metric()
+        #if self.trajmanager.which_dataset != "custom":
+        self.calc_2d_metric()
     
     def run_viewer(self, lower_speed=True):
         if network_gui.conn == None:
@@ -422,27 +422,31 @@ class Mapper(SLAMParameters):
                 
                 valid_depth_mask_ = (gt_depth_>0)
                 
-                gt_rgb_ = gt_rgb_ * valid_depth_mask_
-                ours_rgb_ = ours_rgb_ * valid_depth_mask_
+                gt_rgb_w_mask = gt_rgb_ * valid_depth_mask_
+                ours_rgb_w_mask = ours_rgb_ * valid_depth_mask_
                 
-                square_error = (gt_rgb_-ours_rgb_)**2
+                square_error = (gt_rgb_w_mask-ours_rgb_w_mask)**2
                 mse_error = torch.mean(torch.mean(square_error, axis=2))
                 psnr = mse2psnr(mse_error)
                 
                 psnrs += [psnr.detach().cpu()]
-                _, ssim_error = ssim(ours_rgb_, gt_rgb_)
+                _, ssim_error = ssim(ours_rgb_w_mask, gt_rgb_w_mask)
                 ssims += [ssim_error.detach().cpu()]
-                lpips_value = cal_lpips(gt_rgb_.unsqueeze(0), ours_rgb_.unsqueeze(0))
+                lpips_value = cal_lpips(gt_rgb_w_mask.unsqueeze(0), ours_rgb_w_mask.unsqueeze(0))
                 lpips += [lpips_value.detach().cpu()]
                 
-                if self.save_results and ((i+1)%100==0 or i==len(image_names)-1):
+                #if self.save_results and ((i+1)%100==0 or i==len(image_names)-1):
+                if self.save_results:
                     ours_rgb_output = np.asarray(ours_rgb_.detach().cpu()).squeeze().transpose((1,2,0)) # edited from ours_rgb
                     gt_rgb_output = gt_rgb # np.asarray(gt_rgb_.detach().cpu()).squeeze().transpose((1,2,0))
                     
                     # Save the predicted output image
                     ours_rgb_output = np.clip(ours_rgb_output, 0., 1.0)
                     ours_rgb_output = (ours_rgb_output*255).astype(np.uint8)
-                    cv2.imwrite(f"{self.output_path}/pred_rgb_{i}.png", cv2.cvtColor(ours_rgb_output, cv2.COLOR_RGB2BGR))
+                    save_render_path = f"{self.output_path}/renders"
+                    if not os.path.exists(save_render_path):
+                        os.makedirs(save_render_path)
+                    cv2.imwrite(f"{save_render_path}/pred_rgb_{i}.png", cv2.cvtColor(ours_rgb_output, cv2.COLOR_RGB2BGR))
                     
                     if self.wandb:
                         wandb.log({"pred_rgb": wandb.Image(ours_rgb_output)})
@@ -473,6 +477,13 @@ class Mapper(SLAMParameters):
             if self.wandb:
                 wandb.log({"PSNR": psnrs.mean(), "SSIM": ssims.mean(), "LPIPS": lpips.mean()})
                 wandb.finish()
+    
+    def save_renders(self):
+        image_names, depth_image_names = self.get_image_dirs(self.dataset_path)
+        
+        for i in range(len(image_names)):
+            ours_rgb_ = render(cam, self.gaussians, self.pipe, self.background)["render"]
+        
 
 def mse2psnr(x):
     return -10.*torch.log(x)/torch.log(torch.tensor(10.))

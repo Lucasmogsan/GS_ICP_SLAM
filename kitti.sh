@@ -66,8 +66,7 @@ run_()
                                     --trackable_opacity_th $trackable_opacity_th\
                                     --overlapped_th2 $overlapped_th2\
                                     --downsample_rate $downsample_rate\
-                                    --save_results\
-                                    --wandb
+                                    --save_results
     wait
 }
 
@@ -82,7 +81,7 @@ run_kitti()
     local overlapped_th2=$7
     local downsample_rate=$8
 
-    run_ "2011_10_03_drive_0027" "configs/KITTI/2011_10_03_drive_0027.txt" $result_txt $keyframe_th $knn_maxd $overlapped_th $max_correspondence_distance $trackable_opacity_th $overlapped_th2 $downsample_rate    
+    run_ "2011_09_26_drive_0093" "configs/KITTI/2011_09_26_drive_0093.txt" $result_txt $keyframe_th $knn_maxd $overlapped_th $max_correspondence_distance $trackable_opacity_th $overlapped_th2 $downsample_rate    
 }
 
 # txt_file="re_init_ablation/default_3DGS.txt"
@@ -98,14 +97,14 @@ str_pad 15 " " left <<< "SSIM" >> $txt_file
 str_pad 15 " " left <<< "LPIPS" >> $txt_file
 echo "" >> $txt_file
 
-overlapped_th=1e-3
-max_correspondence_distance=0.03
-knn_maxd=99999.0
+overlapped_th=1e-4
+max_correspondence_distance=0.05
+knn_maxd=100.0
 
-trackable_opacity_th=0.09
-overlapped_th2=1e-3
+trackable_opacity_th=0.05
+overlapped_th2=1e-5
 downsample_rate=5
-keyframe_th=0.81
+keyframe_th=0.7
 
 run_kitti $txt_file $keyframe_th $knn_maxd $overlapped_th $max_correspondence_distance \
 $trackable_opacity_th $overlapped_th2 $downsample_rate

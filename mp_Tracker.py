@@ -109,7 +109,6 @@ class Tracker(SLAMParameters):
         
         if self.rerun_viewer:
             rr.init("3dgsviewer")
-            print("TRACK HERE!")
             rr.connect()#addr='127.0.0.1:4321')
         
 
@@ -347,13 +346,17 @@ class Tracker(SLAMParameters):
         print(f"System FPS: {system_fps:.2f}")
         
         self.end_of_dataset[0] = 1
+        
+        self.final_pose[:,:,:] = torch.tensor(self.poses).float()
         if self.trajmanager.which_dataset != "custom":
-            self.final_pose[:,:,:] = torch.tensor(self.poses).float()
             ate_rmse = self.evaluate_ate(self.trajmanager.gt_poses, self.poses)*100.
             print(f"ATE RMSE: {ate_rmse:.2f}")
         
         if self.wandb:
-            wandb.log({"System FPS": system_fps, "ATE RMSE": ate_rmse})
+            if self.trajmanager.which_dataset != "custom":
+                wandb.log({"System FPS": system_fps, "ATE RMSE": ate_rmse})
+            else:
+                wandb.log({"System FPS": system_fps})     
             wandb.finish()
         
         # Save poses as .txt
@@ -368,15 +371,16 @@ class Tracker(SLAMParameters):
                 f.write(f"{frameID} {tx} {ty} {tz} {quaternion[0]} {quaternion[1]} {quaternion[2]} {quaternion[3]}\n")
         
         # Save gt poses as .txt
-        with open(f"{self.output_path}/gt_poses.txt", "w") as f:
-            for pose in self.trajmanager.gt_poses:
-                # Extract translation (tx, ty, tz)
-                tx, ty, tz = pose[0, 3], pose[1, 3], pose[2, 3]
-                # Extract rotation matrix and convert to quaternion (qx, qy, qz, qw)
-                rotation_matrix = pose[:3, :3]
-                quaternion = Rotation.from_matrix(rotation_matrix).as_quat()  # [qx, qy, qz, qw]
-                # Write to file in desired format
-                f.write(f"{tx} {ty} {tz} {quaternion[0]} {quaternion[1]} {quaternion[2]} {quaternion[3]}\n")
+        if self.trajmanager.which_dataset != "custom":
+            with open(f"{self.output_path}/gt_poses.txt", "w") as f:
+                for pose in self.trajmanager.gt_poses:
+                    # Extract translation (tx, ty, tz)
+                    tx, ty, tz = pose[0, 3], pose[1, 3], pose[2, 3]
+                    # Extract rotation matrix and convert to quaternion (qx, qy, qz, qw)
+                    rotation_matrix = pose[:3, :3]
+                    quaternion = Rotation.from_matrix(rotation_matrix).as_quat()  # [qx, qy, qz, qw]
+                    # Write to file in desired format
+                    f.write(f"{tx} {ty} {tz} {quaternion[0]} {quaternion[1]} {quaternion[2]} {quaternion[3]}\n")
 
     
     def get_images(self, images_folder):

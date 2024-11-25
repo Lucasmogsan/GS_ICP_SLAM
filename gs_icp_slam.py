@@ -83,7 +83,7 @@ class GS_ICP_SLAM(SLAMParameters):
 
         # Get size of final poses
         if self.camera_parameters[8] == "custom":
-            num_final_poses = len(self.trajmanager.poses)   # ground truth poses do not exist in custom dataset
+            num_final_poses = len(self.trajmanager.poses)   # Custom dataset, so no ground truth poses
         else:
             num_final_poses = len(self.trajmanager.gt_poses)
         

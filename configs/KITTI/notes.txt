@@ -1,0 +1,17 @@
+LIDAR:
+
+## camera parameters
+W H fx fy cx cy depth_scale depth_trunc dataset_type
+1242 375 959.7910 956.9251 692.0217 224.1806 3276.8 20.0 custom
+
+
+Stereo 1 (30 m threshold)
+## camera parameters
+W H fx fy cx cy depth_scale depth_trunc dataset_type
+1242 375 959.7910 956.9251 692.0217 224.1806 2184.5 30.0 custom
+
+
+Stereo 2 (70 m threshold)
+## camera parameters
+W H fx fy cx cy depth_scale depth_trunc dataset_type
+1242 375 959.7910 956.9251 692.0217 224.1806 936.2 70.0 custom
